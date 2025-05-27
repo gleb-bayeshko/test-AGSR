@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  Box,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { ReactNode } from "react";
@@ -18,6 +19,7 @@ interface BaseModalProps {
   children: ReactNode;
   actions?: ReactNode;
   maxWidth?: "xs" | "sm" | "md" | "lg" | "xl";
+  isLoading?: boolean;
 }
 
 export default function BaseModal({
@@ -28,6 +30,7 @@ export default function BaseModal({
   children,
   actions,
   maxWidth = "sm",
+  isLoading,
 }: BaseModalProps) {
   return (
     <Dialog
@@ -39,6 +42,18 @@ export default function BaseModal({
         transition: { onEntered },
       }}
     >
+      {isLoading && (
+        <Box
+          position="absolute"
+          borderRadius={1}
+          top={0}
+          left={0}
+          width="100%"
+          height="100%"
+          bgcolor="#FFFFFF85"
+          zIndex={20}
+        />
+      )}
       <DialogTitle
         sx={{
           display: "flex",

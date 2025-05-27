@@ -1,14 +1,12 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Task } from "@/utils/types/api";
 
-type UpdatedData = Partial<
-  Omit<Task, "id" | "title" | "description" | "status">
-> &
-  Pick<Task, "id" | "title" | "description" | "status">;
+type UpdatedData = Partial<Task>;
 
 interface ModalTaskInfoState {
   isOpen: boolean;
   data?: Task;
+  isLoading?: boolean;  
   onEdit?: (updatedData: UpdatedData) => void;
   onCancel?: () => void;
 }
@@ -40,10 +38,20 @@ const modalTaskInfoSlice = createSlice({
       state.onEdit = undefined;
       state.onCancel = undefined;
     },
+    updateInfoModalTaskInfo: (state, action: PayloadAction<Task>) => {
+      state.data = action.payload;
+    },
+    setLoadingModalTaskInfo: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload;
+    },
   },
 });
 
-export const { openModalTaskInfo, closeModalTaskInfo } =
-  modalTaskInfoSlice.actions;
+export const {
+  openModalTaskInfo,
+  closeModalTaskInfo,
+  updateInfoModalTaskInfo,
+  setLoadingModalTaskInfo,
+} = modalTaskInfoSlice.actions;
 const modalTaskInfoReducer = modalTaskInfoSlice.reducer;
 export default modalTaskInfoReducer;

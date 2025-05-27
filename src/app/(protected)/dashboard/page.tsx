@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { useTaskLists } from "@/app/_queries/task-lists/useTaskLists";
 import { useCreateTaskList } from "@/app/_queries/task-lists/useCreateTaskList";

@@ -26,7 +26,11 @@ import {
   editTaskInLineSchema,
 } from "@/utils/validations/editTaskInLineSchema";
 import { useAppDispatch } from "@/store/hooks";
-import { openModalTaskInfo } from "@/store/slices/modals/modalTaskInfoSlice";
+import {
+  openModalTaskInfo,
+  setLoadingModalTaskInfo,
+  updateInfoModalTaskInfo,
+} from "@/store/slices/modals/modalTaskInfoSlice";
 
 export default function Task({
   createdAt,
@@ -145,9 +149,23 @@ export default function Task({
           listId,
         },
         onEdit: async (updatedTask) => {
+          dispatch(setLoadingModalTaskInfo(true));
+          // @ts-expect-error its ok
           await updateTaskAsync(updatedTask);
-          // @ts-expect-error its fine
-          dispatch(openModalTaskInfo({ data: updatedTask }));
+          dispatch(setLoadingModalTaskInfo(false));
+          dispatch(
+            updateInfoModalTaskInfo({
+              id,
+              title,
+              description,
+              status,
+              dueAt,
+              createdAt,
+              updatedAt,
+              listId,
+              ...updatedTask,
+            })
+          );
         },
         onCancel: () => reset({ title }),
       })

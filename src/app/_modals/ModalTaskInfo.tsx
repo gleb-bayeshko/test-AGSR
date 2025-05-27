@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Box,
   Button,
   Chip,
   Popover,
@@ -16,9 +17,6 @@ import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { useDeadlineTimer, DeadlineStatus } from "@/hooks/useDeadlineTimer";
 import { TaskStatus } from "@/utils/types/api";
 import { format } from "date-fns";
-import { TiDeleteOutline } from "react-icons/ti";
-import { TbEdit, TbDeviceFloppy, TbPencilCancel } from "react-icons/tb";
-import ButtonWithIcon from "@/ui/ButtonWithIcon";
 import StatusSelector, {
   statusMap,
 } from "../(protected)/dashboard/_components/StatusSelector";
@@ -32,12 +30,13 @@ import {
 
 export default function ModalTaskInfo() {
   const dispatch = useAppDispatch();
-  const { isOpen, data, onCancel, onEdit } = useAppSelector(
+  const { isOpen, data, onCancel, onEdit, isLoading } = useAppSelector(
     (state) => state.modalTaskInfo
   );
 
   const [isEditing, setIsEditing] = useState(false);
   const [timerData, startTimer] = useDeadlineTimer();
+  const [initialDueAt, setInitialDueAt] = useState<Date | null>(null);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openPopover = Boolean(anchorEl);
@@ -59,6 +58,8 @@ export default function ModalTaskInfo() {
     },
   });
 
+  const dueAtWatched = watch("dueAt");
+
   useEffect(() => {
     if (data) {
       reset({
@@ -71,14 +72,23 @@ export default function ModalTaskInfo() {
   }, [data, reset]);
 
   useEffect(() => {
-    if (data?.dueAt && data.status !== TaskStatus.DONE) {
-      startTimer(data.dueAt);
+    if (data) {
+      setInitialDueAt(data.dueAt ? new Date(data.dueAt) : null);
     }
-  }, [data, startTimer]);
+  }, [data]);
+
+  useEffect(() => {
+    if (!isEditing && initialDueAt) startTimer(initialDueAt.toISOString());
+  }, [data, initialDueAt, isEditing, startTimer]);
+
+  useEffect(() => {
+    if (dueAtWatched) startTimer(dueAtWatched.toISOString());
+  }, [dueAtWatched, startTimer]);
 
   const handleClose = () => {
     setIsEditing(false);
     dispatch(closeModalTaskInfo());
+    onCancel?.();
   };
 
   const onSubmit = (values: TaskInfoFormValues) => {
@@ -87,12 +97,16 @@ export default function ModalTaskInfo() {
       ...values,
       dueAt: values.dueAt?.toISOString() || null,
     });
-    dispatch(closeModalTaskInfo());
     setIsEditing(false);
   };
 
   return (
-    <BaseModal open={isOpen} onClose={handleClose} title="Информация о задаче">
+    <BaseModal
+      open={isOpen}
+      isLoading={isLoading}
+      onClose={handleClose}
+      title="Информация о задаче"
+    >
       {data && (
         <form onSubmit={handleSubmit(onSubmit)}>
           <Stack spacing={3}>
@@ -112,6 +126,7 @@ export default function ModalTaskInfo() {
                       />
                     )}
                   />
+
                   <Controller
                     name="description"
                     control={control}
@@ -128,8 +143,14 @@ export default function ModalTaskInfo() {
                 </>
               ) : (
                 <>
-                  <Typography variant="h6">{data.title}</Typography>
-                  <Typography>{data.description}</Typography>
+                  <Box display="flex" flexDirection="column">
+                    <Typography variant="body1">Название:</Typography>
+                    <Typography variant="h6">{data.title}</Typography>
+                  </Box>
+                  <Box display="flex" flexDirection="column">
+                    <Typography variant="body1">Описание:</Typography>
+                    <Typography>{data.description}</Typography>
+                  </Box>
                 </>
               )}
 
@@ -190,7 +211,7 @@ export default function ModalTaskInfo() {
                     >
                       <DateCalendar
                         disablePast
-                        value={watch("dueAt")}
+                        value={dueAtWatched}
                         onChange={(date) => {
                           setValue("dueAt", date);
                           setAnchorEl(null);
@@ -202,7 +223,16 @@ export default function ModalTaskInfo() {
               </Stack>
 
               <Typography variant="body2" color="text.secondary">
-                Создано: {format(new Date(data.createdAt), "dd.MM.yyyy")}
+                Создано:{" "}
+                {format(new Date(data.createdAt), "dd.MM.yyyy - HH:mm")}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ marginTop: "6px!important" }}
+              >
+                Обновлено:{" "}
+                {format(new Date(data.updatedAt), "dd.MM.yyyy - HH:mm")}
               </Typography>
             </Stack>
 
@@ -226,19 +256,17 @@ export default function ModalTaskInfo() {
                   </Button>
                 </>
               ) : (
-                <>
-                  <Button
-                    color="warning"
-                    type="button"
-                    variant="contained"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsEditing(true);
-                    }}
-                  >
-                    Редактировать
-                  </Button>
-                </>
+                <Button
+                  color="warning"
+                  type="button"
+                  variant="contained"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsEditing(true);
+                  }}
+                >
+                  Редактировать
+                </Button>
               )}
             </Stack>
           </Stack>
